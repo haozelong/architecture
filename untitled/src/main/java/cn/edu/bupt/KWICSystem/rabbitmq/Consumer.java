@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class Consumer {
+    public static String rabbitMqRes = "";
     // 交换机
 //    private final static String QUEUE_NAME = "test_queue_work";
 //
@@ -54,18 +55,22 @@ public class Consumer {
 
     public static void getMessage() throws IOException, TimeoutException,InterruptedException
     {
+        String res;
         Address[] addresses = new Address[]{new Address(IP_ADDRESS, PORT)};
         ConnectionFactory factory = new ConnectionFactory();
         factory.setUsername(USER_NAME);
         factory.setPassword(PASSWORD);
         Connection connection = factory.newConnection(addresses); //创建连接
         final Channel channel = connection.createChannel(); //创建信道
-        channel.basicQos(64); //设置客户端最多接收未被ack的消息的个数
+        channel.exchangeDeclare("amqp.fanout","fanout");
+        channel.queueBind(QUEUE_NAME, "amqp.fanout","");
+        channel.basicQos(1); //设置客户端最多接收未被ack的消息的个数
         DefaultConsumer consumer = new DefaultConsumer(channel)
         {
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException
             {
-                System.out.println("接收信息：" + new String(body));
+                rabbitMqRes = new String(body);
+                System.out.println("接收消息队列 'q_test_01' 中的信息：" + new String(body));
                 try
                 {
                     TimeUnit.SECONDS.sleep(1);

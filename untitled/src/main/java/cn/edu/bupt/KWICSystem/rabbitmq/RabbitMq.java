@@ -26,7 +26,11 @@ public class RabbitMq {
         factory.setPassword("guest");
         // 通过工程获取连接
         Connection connection = factory.newConnection();
-        System.out.println("连接MQ成功，请输入内容");
+        System.out.println("连接MQ成功，");
+        System.out.println("连接的ip地址为：127.0.0.1");
+        System.out.println("连接的端口为：5672");
+        System.out.println("连接的用户名为：guest");
+        System.out.println("连接的用户密码为：guest");
         return connection;
     }
     //关闭连接

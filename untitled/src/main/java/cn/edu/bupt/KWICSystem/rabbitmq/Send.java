@@ -17,8 +17,9 @@ public class Send {
 
         // 消息内容
 //        String message = "Hello World!";
+//        System.out.println(message);
         channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
-        System.out.println(" [x] Sent '" + message + "'");
+        System.out.println(" 发送消息 '" + message + " '到消息队列 'q_test_01' 中：");
         //关闭通道和连接
         channel.close();
         connection.close();

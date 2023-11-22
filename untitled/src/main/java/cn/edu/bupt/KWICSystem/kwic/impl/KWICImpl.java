@@ -43,16 +43,16 @@ public class KWICImpl extends Thread implements KWIC {
         }  else if ("3".equals(cmd)) {
             cmdCode = SOCKET_ADD_LINES;
         } else if ("4".equals(cmd)) {
-            cmdCode = CMD_QUIT;
-        } else if ("5".equals(cmd)) {
             cmdCode = MQ_ADD_LINES;
+        } else if ("5".equals(cmd)) {
+            cmdCode = CMD_QUIT;
         }
 
         return cmdCode;
     }
 
     @Override
-    public void execute() {
+    public void execute() throws Exception {
         String line = null;
         int cmdCode = -1;
 
@@ -83,12 +83,31 @@ public class KWICImpl extends Thread implements KWIC {
             }
             line = input.readLine();
 
+            if (cmdCode == MQ_ADD_LINES && !isCmdMode) {
+                try {
+//                            Scanner scanner = new Scanner(System.in);
+//                            String x = scanner.next();
+//                            System.out.println(x);
+                    String x = line;
+//                    Send.send(x);
+                    Consumer.getMessage();
+                    line = Consumer.rabbitMqRes;
+                } catch(IOException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
             if (isCmdMode) {
                 cmdCode = parseCmd(line);
                 switch (cmdCode) {
-                    case CMD_ADD_LINE:
+                    case MQ_ADD_LINES:
+//                        RabbitMq.getConnection();
+                        System.out.print("请输入内容：");
                         isCmdMode = false;
                         break;
+                    case CMD_ADD_LINE:
                     case FILE_ADD_LINES:
                         isCmdMode = false;
                         break;
@@ -104,23 +123,6 @@ public class KWICImpl extends Thread implements KWIC {
                         System.out.println("Good Bye!");
                         System.exit(0);
                         break;
-                    case MQ_ADD_LINES:
-                        try {
-                            RabbitMq.getConnection();
-                            Scanner scanner = new Scanner(System.in);
-                            String x = scanner.next();
-                            Send.send(x);
-                            Consumer.getMessage();
-                        } catch(IOException e) {
-                            e.printStackTrace();
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        } catch (TimeoutException e) {
-                            throw new RuntimeException(e);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        break;
 
                     default:
                         System.out.println("请选择正确的序号！");
@@ -132,6 +134,8 @@ public class KWICImpl extends Thread implements KWIC {
                 } else if (cmdCode == FILE_ADD_LINES) {
                     List<String> fileLines = input.readFile(line);
                     shifter.setup(fileLines);
+                } else if (cmdCode == MQ_ADD_LINES) {
+                    shifter.setup(line);
                 }
                 if (shifter.getLineCount() == 0) {
                     System.out.println("<---内容为空！--->");
@@ -140,7 +144,7 @@ public class KWICImpl extends Thread implements KWIC {
                     alphabetizer.alpha(shifter);
 
                     // 输出排序后的结果
-                    if (cmdCode == CMD_ADD_LINE) {
+                    if (cmdCode == CMD_ADD_LINE || cmdCode == MQ_ADD_LINES) {
                         output.print(alphabetizer);
                     } else if (cmdCode == FILE_ADD_LINES) {
                         output.write(alphabetizer);
@@ -152,6 +156,10 @@ public class KWICImpl extends Thread implements KWIC {
     }
 
     public void run() {
-        execute();
+        try {
+            execute();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
